@@ -8,18 +8,24 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 public class BootApplication {
     public static void main(String[] args) {
-        GenericWebApplicationContext applicationContext = new GenericWebApplicationContext();
+        GenericWebApplicationContext applicationContext = new GenericWebApplicationContext(){
+            @Override
+            protected void onRefresh() {
+                super.onRefresh();
+                ServletWebServerFactory servletWebServerFactory = new TomcatServletWebServerFactory();
+                servletWebServerFactory.getWebServer(servletContext -> {
+                            servletContext.addServlet("dispatcherServlet",
+                                    new DispatcherServlet(this)
+                            ).addMapping("/*");
+                        })
+                        .start();
+
+            }
+        };
         applicationContext.registerBean(HelloController.class);
         applicationContext.registerBean(SimpleHelloService.class);
-        applicationContext.refresh();
+        applicationContext.refresh();//Template Method Pattern, 상속을 통해 기능 확장
 
-        ServletWebServerFactory servletWebServerFactory = new TomcatServletWebServerFactory();
-        servletWebServerFactory.getWebServer(servletContext -> {
-                    servletContext.addServlet("dispatcherServlet",
-                            new DispatcherServlet(applicationContext)
-                    ).addMapping("/*");
-                })
-                .start();
 
     }
 }
